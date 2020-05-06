@@ -17,8 +17,7 @@ type Game struct {
 }
 
 type GamesResults struct {
-	Games []Game     `json:"games"`
-	sync  sync.Mutex `json:"-"`
+	Games []Game `json:"games"`
 }
 
 func (g GamesResults) Len() int           { return len(g.Games) }
@@ -66,8 +65,6 @@ func main() {
 				g.Digits[n], _ = strconv.Atoi(string(y[1 : len(y)-1]))
 			}
 
-			res.sync.Lock()
-			defer res.sync.Unlock()
 			res.Games = append(res.Games, g)
 		}(i)
 	}
