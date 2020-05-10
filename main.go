@@ -25,6 +25,8 @@ func (g GamesResults) Swap(i, j int)      { g.Games[i], g.Games[j] = g.Games[j],
 func (g GamesResults) Less(i, j int) bool { return g.Games[i].Number < g.Games[j].Number }
 
 func main() {
+	lastGame := 909
+
 	rgx, err := regexp.Compile(`<div class="lot_num">[^.]+(?:<\/div>)`)
 	if err != nil {
 		panic(err.Error())
@@ -38,15 +40,29 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for i := 1; i <= 909; i++ {
+	res.Games = make([]Game, lastGame+1)
+
+	for i := 1; i <= lastGame; i++ {
 		wg.Add(1)
 		go func(num int) {
 			defer wg.Done()
 			link := "https://m.search.naver.com/search.naver?where=m&sm=mtb_etc&query=" + strconv.Itoa(num) + "%ED%9A%8C%EB%A1%9C%EB%98%90/"
 
-			resp, err := http.Get(link)
-			if err != nil {
-				panic(err.Error())
+			var resp *http.Response
+			var err error
+			var counter int
+
+			for {
+				counter++
+				resp, err = http.Get(link)
+				if err != nil {
+					fmt.Println(err.Error())
+					if counter > 10 {
+						panic(err)
+					}
+					continue
+				}
+				break
 			}
 
 			defer resp.Body.Close()
@@ -65,7 +81,7 @@ func main() {
 				g.Digits[n], _ = strconv.Atoi(string(y[1 : len(y)-1]))
 			}
 
-			res.Games = append(res.Games, g)
+			res.Games[num] = g
 		}(i)
 	}
 
